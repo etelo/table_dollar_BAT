@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Таблица котировок с автообновлением</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        width: 300px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      th,
+      td {
+        border: 1px solid black;
+        padding: 2px;
+        text-align: left;
+        text-align: center;
+      }
+
+      thead {
+        background-color: #f2f2f2;
+      }
+
+      .inputField,
+      .buttonGroup {
+        margin-bottom: 10px;
+      }
+
+      label {
+        margin-right: 5px;
+      }
+
+      input[type="number"] {
+        margin-right: 20px;
+      }
+
+      input[type="number"].highlight {
+        animation: highlight 1s forwards; /* Указываем, что анимация должна оставаться на последнем кадре */
+      }
+
+      button {
+        margin-right: 5px;
+      }
+
+      /* Стиль анимации для полей ввода */
+      @keyframes highlight {
+        from {
+          background-color: #ffffff;
+        }
+        to {
+          background-color: #ccffcc;
+        } /* Зеленый цвет для подсветки */
+      }
+
+      /* Класс для применения анимации */
+      .highlight {
+        animation: highlight 2s; /* Анимация длится 2 секунды */
+      }
+    </style>
+  </head>
+  <body>
+    <div class="inputField">
+      <label for="thbRate">THB:</label>
+      <input type="number" id="thbRate" value="33.12" />
+      <label for="rubRate">RUB:</label>
+      <input type="number" id="rubRate" value="75.25" />
+      <label for="bynRate">BYN:</label>
+      <input type="number" id="bynRate" value="2.58" />
+    </div>
+    <div class="buttonGroup">
+      <button id="updateButton">Показать котировки</button>
+      <button id="fetchRates">Обновить курсы</button>
+    </div>
+    <table id="currencyTable">
+      <thead>
+        <tr>
+          <th>USD</th>
+          <th>THB</th>
+          <th>RUB</th>
+          <th>BYN</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Здесь будут строки с курсами валют -->
+      </tbody>
+    </table>
+    <script>
+      document.getElementById("updateButton").addEventListener("click", function () {
+        const thbRate = document.getElementById("thbRate").value;
+        const rubRate = document.getElementById("rubRate").value;
+        const bynRate = document.getElementById("bynRate").value;
+
+        const dollars = [
+          1, 2, 3, 4, 5, 7, 10, 15, 20, 25, 30, 40, 50, 75, 100, 150, 200, 300, 400, 500,
+        ];
+        const tableBody = document.getElementById("currencyTable").getElementsByTagName("tbody")[0];
+        tableBody.innerHTML = "";
+
+        const rates = {
+          THB: parseFloat(thbRate),
+          RUB: parseFloat(rubRate),
+          BYN: parseFloat(bynRate),
+        };
+
+        updateTable(dollars, rates);
+      });
+
+      document.getElementById("fetchRates").addEventListener("click", function () {
+        // Замените 'YOUR_API_KEY' на ваш действительный API-ключ
+        const apiUrl = "https://api.exchangerate-api.com/v4/latest/USD";
+
+        fetch(apiUrl)
+          .then((response) => response.json())
+          .then((data) => {
+            // Перебор всех полей ввода и добавление анимации
+            const inputFields = document.querySelectorAll(".inputField input");
+            inputFields.forEach((field) => {
+              field.classList.add("highlight");
+              setTimeout(() => field.classList.remove("highlight"), 2000); // Удаление класса через 2 секунды
+            });
+
+            document.getElementById("thbRate").value = data.rates.THB;
+            document.getElementById("rubRate").value = data.rates.RUB;
+            document.getElementById("bynRate").value = data.rates.BYN;
+          })
+          .catch((error) => alert("Ошибка при получении курсов валют: " + error));
+      });
+
+      function updateTable(dollars, rates) {
+        const tableBody = document.getElementById("currencyTable").getElementsByTagName("tbody")[0];
+        tableBody.innerHTML = "";
+
+        dollars.forEach((dollar, index) => {
+          const row = tableBody.insertRow();
+          Object.keys(rates).forEach((currency, ci) => {
+            row.insertCell(ci).textContent =
+              currency === "THB" && index < 7
+                ? (dollar * rates[currency]).toFixed(2)
+                : Math.round(dollar * rates[currency]);
+          });
+          row.insertCell(0).textContent = dollar;
+        });
+      }
+    </script>
+  </body>
+</html>
